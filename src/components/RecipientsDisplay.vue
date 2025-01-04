@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted  } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount  } from 'vue';
 import RecipientsBadge from './RecipientsBadge.vue';
 
 const props = defineProps < {
@@ -17,7 +17,24 @@ onMounted(() => {
             containerParentWidth.value = getElementInnerWidth(parentElement);
         }
     }
+    
+    // Add event listener for window resize
+    window.addEventListener('resize', recalculate);
+
+    // Clean up event listener on unmount
+    onBeforeUnmount(() => {
+        window.removeEventListener('resize', recalculate);
+    });
 });
+
+const recalculate = () => {
+    if (containerRef.value) {
+        const parentElement = containerRef.value.parentElement;
+        if (parentElement) {
+            containerParentWidth.value = getElementInnerWidth(parentElement);
+        }
+    }
+};
 
 const displayedRecipients = computed(() => {
     // creating temporary span for ... to get its width
@@ -29,7 +46,11 @@ const displayedRecipients = computed(() => {
     
     // Calculate the available space for content by subtracting the ellipsis and badge width from the parent container
     let badgeWidth = 28;
-    let totalContainerWidth = containerParentWidth.value - elipseWidth - badgeWidth;
+    let totalContainerWidth = containerParentWidth.value;
+    // if recipients > 2 include in totalWidth the elipse and badge width
+    if(props.recipients.length > 2) {
+        totalContainerWidth = containerParentWidth.value - elipseWidth - badgeWidth;
+    }
     let totalWidth = 0;
     let displayedEmails = [];
     let truncated = false;
@@ -51,7 +72,7 @@ const displayedRecipients = computed(() => {
 
             // Append the element to the body to measure its width
             document.body.appendChild(tempElement);
-            const recipientWidth = tempElement.getBoundingClientRect().width;
+            const recipientWidth = tempElement.offsetWidth;
             document.body.removeChild(tempElement);
 
             if (recipientWidth > totalContainerWidth) {
@@ -87,45 +108,50 @@ const getElementInnerWidth = (element: HTMLElement): number => {
 </script>
 
 <template>
-    <span class="recipients"   ref="containerRef">
-        {{ displayedRecipients.text }}
+    <div class="container">
+        <span :class="['recipients', { truncated: displayedRecipients.truncated > 0 }]" ref="containerRef">
+            {{ displayedRecipients.text }}
+        </span>    
         <RecipientsBadge 
             ref="containerBadge" 
             v-if="displayedRecipients.truncated" 
             :numTruncated="displayedRecipients.truncated" 
             class="badge"/>
-    </span>    
+    </div>
 </template>
 
 <style scoped>
+    .container
+    {
+        float: left;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
     .recipients
     {
         display: flex;
         align-items: center;
-        justify-content: space-between;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
     .recipients .badge
     {
         margin-left: auto;
     }
+    @media (max-width: 1200px) {
+        /* Styles for screens 1200px wide or smaller */
+        .recipients
+        {
+            display: block;
+        }
+        .recipients.truncated {
+            width: calc(100% - 28px);
+        }
+    }
 </style>
-
-<!--
-
-Solution:
-Get parent's width
-Iterate recipients to append each on a temp container
-Get temp container width for each iteration
-
-Compare width for both parent and the temp container
-
-IF TEMP > PARENT
-    truncate = true
-    IF != first recipient
-        replace the current email to ", ..."
-IF TEMP < PARENT
-    display recipients
--->
 
 <!--
 TASKS
@@ -135,10 +161,13 @@ Simplified
 1. First recipient record must be displayed.
    IF recipient > 1, replace the succeeding to `, ...` and show badge
    IF recipient = 1 allowed it to be clipped with ...
--- DONE except for the badge -- 
+-- DONE -- 
 2. This functionality should work on any screen size and when the screen is resized.
+-- DONE -- 
 3. For the element that holds the list of recipients, the `display` must be set to `flex` and the `align-items` property must be set to `center` to ensure alignment correctness.
+-- DONE -- 
 4. Do not add new/extra functionalities and features.
+-- DONE -- 
 
 Full
 1. If all the email addresses in the recipients list fit in the available space, 
@@ -158,10 +187,15 @@ Full
    If there is only one recipient, a badge must not be shown. If there is more than one recipient, the first recipient must be excluded from the number of trimmed recipients in the badge.
 5. This functionality should work on any screen size and when the screen is resized. 
    For simplicity, this will only be tested in a recent version of a `Chromium` browser.
+-- DONE -- 
 6. For the element that holds the list of recipients, the `display` must be set to `flex` and the `align-items` property must be set to `center` to ensure alignment correctness.
+-- DONE -- 
 7. Do not modify or add new props to the `RecipientsBadge` component.
+-- DONE -- 
 8. Do not re-order the recipients.
+-- DONE -- 
 9. Do not add new/extra functionalities and features.
+-- DONE -- 
 
 Tooltips
 Simplified
