@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, onMounted  } from 'vue';
+import RecipientsBadge from './RecipientsBadge.vue';
 
 const props = defineProps < {
 recipients: string[];
@@ -10,12 +11,12 @@ const containerRef = ref < HTMLElement | null > (null);
 const containerParentWidth = ref(0);
     
 onMounted(() => {
-  if (containerRef.value) {
-    const parentElement = containerRef.value.parentElement;
-    if (parentElement) {
-      containerParentWidth.value = getElementInnerWidth(parentElement);
+    if (containerRef.value) {
+        const parentElement = containerRef.value.parentElement;
+        if (parentElement) {
+            containerParentWidth.value = getElementInnerWidth(parentElement);
+        }
     }
-  }
 });
 
 const displayedRecipients = computed(() => {
@@ -26,8 +27,9 @@ const displayedRecipients = computed(() => {
     let elipseWidth = tempElement1.getBoundingClientRect().width;
     document.body.removeChild(tempElement1);
     
-    // Calculate the available space for content by subtracting the ellipsis width from the parent container
-    let totalContainerWidth = containerParentWidth.value - elipseWidth;
+    // Calculate the available space for content by subtracting the ellipsis and badge width from the parent container
+    let badgeWidth = 28;
+    let totalContainerWidth = containerParentWidth.value - elipseWidth - badgeWidth;
     let totalWidth = 0;
     let displayedEmails = [];
     let truncated = false;
@@ -45,7 +47,7 @@ const displayedRecipients = computed(() => {
             displayedEmails.push(props.recipients[i]);
         } else {
             const recipient = props.recipients[i];
-            tempElement.textContent = displayedEmails.join(', ') + (displayedEmails.length > 0 ? ', ' : '') + recipient + ', ';
+            tempElement.textContent = displayedEmails.join(', ') + (displayedEmails.length > 0 ? ', ' : '') + recipient;
 
             // Append the element to the body to measure its width
             document.body.appendChild(tempElement);
@@ -66,7 +68,10 @@ const displayedRecipients = computed(() => {
     const displayText = truncated ? displayedEmails.join(', ') + ', ...' : displayedEmails.join(', ');
 
     // Return the final display text
-    return displayText;
+    return {
+        text: displayText,
+        truncated: props.recipients.length - displayedEmails.length
+    };
 });
 
 const getElementInnerWidth = (element: HTMLElement): number => {
@@ -82,8 +87,28 @@ const getElementInnerWidth = (element: HTMLElement): number => {
 </script>
 
 <template>
-    <span ref="containerRef">{{ displayedRecipients }}</span>
+    <span class="recipients"   ref="containerRef">
+        {{ displayedRecipients.text }}
+        <RecipientsBadge 
+            ref="containerBadge" 
+            v-if="displayedRecipients.truncated" 
+            :numTruncated="displayedRecipients.truncated" 
+            class="badge"/>
+    </span>    
 </template>
+
+<style scoped>
+    .recipients
+    {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .recipients .badge
+    {
+        margin-left: auto;
+    }
+</style>
 
 <!--
 
