@@ -151,6 +151,7 @@ Full
 -- DONE --
 3. If the recipients list has been trimmed (i.e. at least one email address is not shown), add `, ...` after the last email address shown. 
    Furthermore, the rightmost end of the column must indicate the number of trimmed recipients with the provided `RecipientsBadge` component.
+-- DONE --
 4. A special case is given to the first recipient. 
    If there is not enough space to fit even the first recipient's email address, the email address is allowed to be clipped with an ellipsis. 
 -- DONE --
