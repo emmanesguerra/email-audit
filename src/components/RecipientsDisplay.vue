@@ -4,6 +4,7 @@ import RecipientsBadge from './RecipientsBadge.vue';
 
 const props = defineProps < {
 recipients: string[];
+showTooltip: false
 }
 > ();
 
@@ -116,7 +117,10 @@ const getElementInnerWidth = (element: HTMLElement): number => {
             ref="containerBadge" 
             v-if="displayedRecipients.truncated" 
             :numTruncated="displayedRecipients.truncated" 
-            class="badge"/>
+            class="badge"
+            @mouseover="showTooltip = true"
+            @mouseleave="showTooltip = false"/>
+        <RecipientTooltip v-if="showTooltip" class='tooltip'>{{ props.recipients.join(', ') }}</RecipientTooltip>
     </div>
 </template>
 
@@ -141,6 +145,19 @@ const getElementInnerWidth = (element: HTMLElement): number => {
     {
         margin-left: auto;
     }
+    .tooltip
+    {
+        position: fixed;
+        top: 8px;
+        right: 8px;
+        z-index: 12;
+        background-color: #666;
+        color: #f0f0f0;
+        padding: 8px 16px;
+        border-radius: 24px;
+        display: flex;
+        align-items: center;
+    }    
     @media (max-width: 1200px) {
         /* Styles for screens 1200px wide or smaller */
         .recipients
@@ -149,6 +166,10 @@ const getElementInnerWidth = (element: HTMLElement): number => {
         }
         .recipients.truncated {
             width: calc(100% - 28px);
+        }
+        .tooltip
+        {
+            font-size: 12px;
         }
     }
 </style>
@@ -212,6 +233,7 @@ Simplified
     e. Text color is `#f0f0f0`.
     f. Border radius is `24px`.
     g. The `display` property must be set to `flex` and the `align-items` property must be set to `center` to ensure alignment correctness.
+-- DONE --
 
 Full
 1. The recipients list must be shown in a tooltip at the **top right** corner of the viewport.
@@ -230,4 +252,5 @@ Full
     e. Text color is `#f0f0f0`.
     f. Border radius is `24px`.
     g. The `display` property must be set to `flex` and the `align-items` property must be set to `center` to ensure alignment correctness.
+-- DONE --
 -->
